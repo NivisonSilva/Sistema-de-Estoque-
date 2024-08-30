@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Gerenciamento de Produtos</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #d35400; /* Laranja escuro */
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        height: 100vh;
+        flex-direction: column;
+      }
+
+
+      .header {
+        text-align: center;
+        color: white;
+        margin-top: 20px;
+      }
+
+
+      .container {
+        display: flex;
+        width: 80%;
+        margin: 20px 0;
+        justify-content: space-between;
+      }
+
+
+      .form-container {
+        width: 45%;
+        background-color: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+      }
+
+
+      .table-container {
+        width: 45%;
+      }
+
+
+      h1,
+      h2 {
+        color: #333;
+      }
+
+
+      label {
+        display: block;
+        margin-top: 8px;
+        font-weight: bold;
+      }
+
+
+      input,
+      select {
+        width: 100%;
+        padding: 6px;
+        margin-top: 4px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+
+
+      button[type="submit"] {
+        width: 100%;
+        padding: 8px;
+        margin-top: 12px;
+        background-color: #006400; /* Verde bandeira */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+
+      button[type="submit"]:hover {
+        background-color: #004d00; /* Tom mais escuro ao passar o mouse */
+      }
+
+
+      table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+      }
+
+
+      th,
+      td {
+        padding: 6px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+
+      th {
+        background-color: #d35400; /* Laranja escuro */
+        color: white;
+      }
+
+
+      .update-button {
+        background-color: #d35400;
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+
+      .update-button:hover {
+        background-color: #b54700;
+      }
+
+
+      @media screen and (max-width: 768px) {
+        body {
+          flex-direction: column;
+          align-items: center;
+        }
+
+
+        .container {
+          flex-direction: column;
+          width: 90%;
+        }
+
+
+        .form-container,
+        .table-container {
+          width: 100%;
+        }
+      }
+
+
+      .export-button {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #006400; /* Verde bandeira */
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+
+      .export-button:hover {
+        background-color: #004d00; /* Tom mais escuro ao passar o mouse */
+      }
+    </style>
+  </head>
+  <body>
+    <button id="exportPDF" class="export-button">Exportar para PDF</button>
+
+
+    <div class="header">
+      <h1>Sistema de Registro de Fardamentos e EPI's</h1>
+    </div>
+
+
+    <div class="container">
+      <div class="form-container">
+        <h2>Gerenciar Produtos</h2>
+        <form id="productForm" class="form-group">
+          <label for="productName">Nome do Produto:</label>
+          <input type="text" id="productName" required />
+
+
+          <label for="productCode">Código do Produto:</label>
+          <input type="text" id="productCode" required />
+
+
+          <label for="stockQty">Quantidade em Estoque:</label>
+          <input type="number" id="stockQty" required />
+
+
+          <label for="desiredQty">Quantidade Desejada:</label>
+          <input type="number" id="desiredQty" required />
+
+
+          <label for="productType">Tipo:</label>
+          <select id="productType" required>
+            <option value="EPI">EPI's</option>
+            <option value="Fardamento">Fardamento</option>
+            <option value="Outro">Outro</option>
+          </select>
+
+
+          <div id="otherType" style="display: none">
+            <label for="otherDescription">Descreva o Tipo:</label>
+            <input type="text" id="otherDescription" />
+          </div>
+
+
+          <button type="submit">Adicionar Produto</button>
+        </form>
+      </div>
+
+
+      <div class="table-container">
+        <h2>Lista de Produtos</h2>
+        <table id="productTable">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Código</th>
+              <th>Estoque</th>
+              <th>Desejado</th>
+              <th>Faltando</th>
+              <th>Tipo</th>
+              <!-- Corrigido para incluir o tipo -->
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- Importando bibliotecas JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.22/jspdf.plugin.autotable.min.js"></script>
+    <script>
+      const productForm = document.getElementById("productForm");
+      const productTable = document
+        .getElementById("productTable")
+        .getElementsByTagName("tbody")[0];
+      const exportPDFButton = document.getElementById("exportPDF");
+      const productType = document.getElementById("productType");
+      const otherType = document.getElementById("otherType");
+
+
+      productType.addEventListener("change", function () {
+        if (productType.value === "Outro") {
+          otherType.style.display = "block";
+        } else {
+          otherType.style.display = "none";
+        }
+      });
+
+
+      productForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+
+        const productName = document.getElementById("productName").value;
+        const productCode = document.getElementById("productCode").value;
+        const stockQty = parseInt(document.getElementById("stockQty").value);
+        const desiredQty = parseInt(
+          document.getElementById("desiredQty").value
+        );
+        const missingQty = desiredQty - stockQty;
+        const type = productType.value;
+        const otherDescription =
+          type === "Outro"
+            ? document.getElementById("otherDescription").value
+            : "";
+
+
+        const newRow = productTable.insertRow();
+
+
+        newRow.insertCell(0).innerText = productName;
+        newRow.insertCell(1).innerText = productCode;
+        newRow.insertCell(2).innerText = stockQty;
+        newRow.insertCell(3).innerText = desiredQty;
+        newRow.insertCell(4).innerText = missingQty;
+        newRow.insertCell(5).innerText =
+          type === "Outro" ? otherDescription : type;
+
+
+        const updateCell = newRow.insertCell(6);
+        const updateButton = document.createElement("button");
+        updateButton.innerText = "Atualizar";
+        updateButton.classList.add("update-button");
+
+
+        updateButton.addEventListener("click", function () {
+          const newStockQty = prompt(
+            "Digite a nova quantidade em estoque:",
+            stockQty
+          );
+          if (newStockQty !== null) {
+            const newMissingQty = desiredQty - parseInt(newStockQty);
+            newRow.cells[2].innerText = newStockQty;
+            newRow.cells[4].innerText = newMissingQty;
+          }
+        });
+
+
+        updateCell.appendChild(updateButton);
+
+
+        productForm.reset();
+        otherType.style.display = "none";
+      });
+
+
+      exportPDFButton.addEventListener("click", function () {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+
+        doc.text("Lista de Produtos", 10, 10);
+
+
+        const headers = [
+          "Nome",
+          "Código",
+          "Estoque",
+          "Desejado",
+          "Faltando",
+          "Tipo",
+        ];
+        const rows = Array.from(productTable.rows).map((row) =>
+          Array.from(row.cells).map((cell) => cell.textContent)
+        );
+
+
+        doc.autoTable({
+          head: [headers],
+          body: rows.slice(1), // Remove the header row
+          startY: 20,
+        });
+
+
+        doc.save("produtos.pdf");
+      });
+    </script>
+  </body>
+</html>
+
+
+
